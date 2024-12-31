@@ -119,18 +119,20 @@ export default function Home() {
           onChange={(e) => setSelectedDeviceId(e.target.value)}
           className="px-4 py-2 bg-gray-700 rounded-md"
         >
-          {devices.map(device => (
-            <option key={device.deviceId} value={device.deviceId}>
-              {device.label || `Camera ${device.deviceId}`}
-            </option>
-          ))}
+          {devices
+            .sort((a, b) => b.deviceId.localeCompare(a.deviceId)) // Sort in descending order
+            .map(device => (
+              <option key={device.deviceId} value={device.deviceId}>
+                {device.label || `Camera ${device.deviceId}`}
+              </option>
+            ))}
         </select>
       </div>
 
       {/* Video feed with border color based on scan status */}
       <video
         ref={videoRef}
-        className={`w-80 h-80 border rounded-xl ${isScanned === true ? "border-green-500" : isScanned === false ? "border-red-500" : "border-gray-300"}`}
+        className={`w-80 h-80 border rounded-xl object-cover ${isScanned === true ? "border-green-500" : isScanned === false ? "border-red-500" : "border-gray-300"}`}
       ></video>
       <p className={`mt-4 text-lg ${isScanned === true ? "text-green-500" : isScanned === false ? "text-red-500" : "text-gray-300"}`}>
         Scanned Data: {qrData}
