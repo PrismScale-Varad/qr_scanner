@@ -22,8 +22,8 @@ export default function Person() {
           setPersonData(data);
         })
         .catch((err) => {
-          console.error("API Error:", err);
-          setError("Failed to fetch data. Please try again.");
+          setPersonData('Invalid');
+          setError("Sorry, data not found");
         });
     }
   }, [id]);
