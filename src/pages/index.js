@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/router";
 import { BrowserQRCodeReader } from "@zxing/browser";
+import { useRouter } from "next/router";
 
 export default function Home() {
   const [qrData, setQrData] = useState("No result");
@@ -10,23 +10,35 @@ export default function Home() {
   useEffect(() => {
     const codeReader = new BrowserQRCodeReader();
 
-    codeReader
-      .decodeOnceFromVideoDevice(undefined, videoRef.current)
-      .then((result) => {
-        const scannedData = result.text;
-        console.log("Scanned QR Code:", scannedData);
-        setQrData(scannedData);
+    const startScanner = async () => {
+      try {
+        const selectedDeviceId = undefined; // or specify the device ID if needed
+        const previewElem = videoRef.current;
 
-        // Redirect to /person/[id] with the scanned data as the ID
-        router.push(`/person/${scannedData}`);
-      })
-      .catch((err) => {
-        console.error("QR Code Error:", err);
-      });
-
-    return () => {
-      
+        // Start the QR code scanner
+        const controls = await codeReader.decodeFromVideoDevice(
+          selectedDeviceId,
+          previewElem,
+          (result, error, controls) => {
+            if (result) {
+              const scannedData = result.text;
+              console.log("Scanned QR Code:", scannedData);
+              setQrData(scannedData);
+              controls.stop();
+              // Redirect to /person/[id] with the scanned data as the ID
+              router.push(`/person/${scannedData}`);
+              
+              // Stop the scanner once the QR code is scanned
+            }
+          }
+        );
+        
+      } catch (error) {
+        console.error("Error starting QR scanner:", error);
+      }
     };
+
+    startScanner();    
   }, [router]);
 
   return (
