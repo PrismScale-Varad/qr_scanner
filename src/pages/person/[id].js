@@ -11,7 +11,7 @@ export default function Person() {
   useEffect(() => {
     if (id) {
       // Make API call to fetch data for the person
-      fetch(`https://67738d5e77a26d4701c5a1d8.mockapi.io/users/${id}`)
+      fetch(`http://localhost:3000/api/bookings/${id}`)
         .then((res) => {
           if (!res.ok) {
             throw new Error("Network response was not ok");
@@ -27,6 +27,10 @@ export default function Person() {
         });
     }
   }, [id]);
+ 
+  const markCheckedIn = () => {
+    
+  }
 
   const handleGoBack = () => {
     router.push("/"); // Go back to home page
