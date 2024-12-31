@@ -10,6 +10,7 @@ export default function Booking() {
   useEffect(() => {
     if (id) {
       // Make API call to fetch data for the booking
+      console.log(`${api_url}/${id}`)
       fetch(`${api_url}/${id}`)
         .then((res) => {
           if (!res.ok) {
