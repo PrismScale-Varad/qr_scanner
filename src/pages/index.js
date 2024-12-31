@@ -17,14 +17,22 @@ export default function Home() {
     const getDevices = async () => {
       const mediaDevices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = mediaDevices.filter(device => device.kind === 'videoinput');
-      setDevices(videoDevices);
-      if (videoDevices.length > 0) {
-        setSelectedDeviceId(videoDevices[0].deviceId);  // Default to the first video device
+  
+      // Prioritize back camera (facingMode: 'environment') as default
+      const backCamera = videoDevices.find(device => device.label.toLowerCase().includes('back') || device.deviceId.includes('environment'));
+      
+      if (backCamera) {
+        setSelectedDeviceId(backCamera.deviceId); // Set back camera as default
+      } else if (videoDevices.length > 0) {
+        setSelectedDeviceId(videoDevices[0].deviceId); // If no back camera, use the first available camera
       }
+  
+      setDevices(videoDevices); // Update the list of devices
     };
-
+  
     getDevices();
   }, []);
+  
 
   useEffect(() => {
     if (selectedDeviceId) {
@@ -119,13 +127,11 @@ export default function Home() {
           onChange={(e) => setSelectedDeviceId(e.target.value)}
           className="px-4 py-2 bg-gray-700 rounded-md"
         >
-          {devices
-            .sort((a, b) => b.deviceId.localeCompare(a.deviceId)) // Sort in descending order
-            .map(device => (
-              <option key={device.deviceId} value={device.deviceId}>
-                {device.label || `Camera ${device.deviceId}`}
-              </option>
-            ))}
+          {devices.map(device => (
+            <option key={device.deviceId} value={device.deviceId}>
+              {device.label || `Camera ${device.deviceId}`}
+            </option>
+          ))}
         </select>
       </div>
 
