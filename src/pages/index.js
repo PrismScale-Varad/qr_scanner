@@ -5,59 +5,78 @@ import { useRouter } from "next/router";
 export default function Home() {
   const [qrData, setQrData] = useState("No result");
   const [isScanned, setIsScanned] = useState(null);  // Track if scan is successful
+  const [devices, setDevices] = useState([]);  // Store available devices
+  const [selectedDeviceId, setSelectedDeviceId] = useState(null);  // Store the selected device ID
+  const [fileName, setFileName] = useState(""); // Store the file name
   const videoRef = useRef(null);
   const router = useRouter();
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    const codeReader = new BrowserQRCodeReader();
-
-    const startScanner = async () => {
-      try {
-        const selectedDeviceId = undefined; // or specify the device ID if needed
-        const previewElem = videoRef.current;
-
-        // Start the QR code scanner
-        const controls = await codeReader.decodeFromVideoDevice(
-          selectedDeviceId,
-          previewElem,
-          (result, error, controls) => {
-            if (result) {
-              const scannedData = result.text;
-              console.log("Scanned QR Code:", scannedData);
-              setQrData(scannedData);
-
-              // Try to cast the scanned QR code data to an integer
-              const parsedId = parseInt(scannedData, 10);
-
-              // If parsedId is a valid integer, change border to green and redirect after 200ms
-              if (!isNaN(parsedId)) {
-                setIsScanned(true);  // Set scan successful
-                controls.stop();
-
-                // Delay the redirect by 200ms
-                setTimeout(() => {
-                  router.push(`/person/${parsedId}`);
-                }, 300);
-              } else {
-                setIsScanned(false);  // Invalid scan
-                setQrData("Invalid QR Code. Please scan a valid ID.");
-              }
-            }
-          }
-        );
-      } catch (error) {
-        console.error("Error starting QR scanner:", error);
+    // Fetch available devices
+    const getDevices = async () => {
+      const mediaDevices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = mediaDevices.filter(device => device.kind === 'videoinput');
+      setDevices(videoDevices);
+      if (videoDevices.length > 0) {
+        setSelectedDeviceId(videoDevices[0].deviceId);  // Default to the first video device
       }
     };
 
-    startScanner();
-  }, [router]);
+    getDevices();
+  }, []);
+
+  useEffect(() => {
+    if (selectedDeviceId) {
+      const codeReader = new BrowserQRCodeReader();
+
+      const startScanner = async () => {
+        try {
+          const previewElem = videoRef.current;
+
+          // Start the QR code scanner with the selected device
+          const controls = await codeReader.decodeFromVideoDevice(
+            selectedDeviceId,
+            previewElem,
+            (result, error, controls) => {
+              if (result) {
+                const scannedData = result.text;
+                console.log("Scanned QR Code:", scannedData);
+                setQrData(scannedData);
+
+                // Try to cast the scanned QR code data to an integer
+                const parsedId = parseInt(scannedData, 10);
+
+                // If parsedId is a valid integer, change border to green and redirect after 200ms
+                if (!isNaN(parsedId)) {
+                  setIsScanned(true);  // Set scan successful
+                  controls.stop();
+
+                  // Delay the redirect by 200ms
+                  setTimeout(() => {
+                    router.push(`/person/${parsedId}`);
+                  }, 300);
+                } else {
+                  setIsScanned(false);  // Invalid scan
+                  setQrData("Invalid QR Code. Please scan a valid ID.");
+                }
+              }
+            }
+          );
+        } catch (error) {
+          console.error("Error starting QR scanner:", error);
+        }
+      };
+
+      startScanner();
+    }
+  }, [selectedDeviceId, router]);
 
   // Handle file input for QR code scanning from an image
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
+      setFileName(file.name);  // Update file name
       const codeReader = new BrowserQRCodeReader();
       const img = new Image();
       img.src = URL.createObjectURL(file);
@@ -90,22 +109,50 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center">
       <h1 className={`text-2xl font-bold mb-4 `}>QR Code Scanner</h1>
-      {/* Set the border color based on the scan result */}
+
+      {/* Camera selection dropdown */}
+      <div className="mb-4">
+        <label htmlFor="cameraSelect" className="mr-2">Select Camera:</label>
+        <select
+          id="cameraSelect"
+          value={selectedDeviceId || ''}
+          onChange={(e) => setSelectedDeviceId(e.target.value)}
+          className="px-4 py-2 bg-gray-700 rounded-md"
+        >
+          {devices.map(device => (
+            <option key={device.deviceId} value={device.deviceId}>
+              {device.label || `Camera ${device.deviceId}`}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Video feed with border color based on scan status */}
       <video
         ref={videoRef}
-        className={`w-80 h-80 border ${isScanned === true ? "border-green-500" : isScanned === false ? "border-red-500" : "border-gray-300"}`}
+        className={`w-80 h-80 border rounded-xl ${isScanned === true ? "border-green-500" : isScanned === false ? "border-red-500" : "border-gray-300"}`}
       ></video>
-      <p className={`mt-4 text-lg ${isScanned === true ? "text-green-500" : isScanned === false ? "text-red-500" : "text-gray-300"}`}>Scanned Data: {qrData}</p>
+      <p className={`mt-4 text-lg ${isScanned === true ? "text-green-500" : isScanned === false ? "text-red-500" : "text-gray-300"}`}>
+        Scanned Data: {qrData}
+      </p>
 
-      <div className="mt-6">
+      {/* File input for QR code image scanning */}
+      <div className="mt-6 flex flex-col items-center gap-2">
+        <label htmlFor="fileInput" className="px-4 py-2 text-white rounded cursor-pointer bg-gray-700 hover:bg-blue-700">
+          Choose File
+        </label>
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          id="fileInput"
           onChange={handleFileChange}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
+          className="hidden" // Hides the default file input element
         />
+        <span className="text-lg">{fileName ? fileName : ""}</span> {/* Display file name if selected */}
       </div>
+
+
     </div>
   );
 }
