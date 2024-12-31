@@ -104,7 +104,7 @@ export default function Home() {
           const parseId = parsed.bookingId;
 
           setIsScanned(true); // Set scan successful
-          router.push(`/person/${parseId}`);
+          router.push(`/booking/${parseId}`);
           
         } catch (error) {
           console.error("Error scanning the QR code from the file:", error);
@@ -115,14 +115,11 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center">
-      <h1 className={`text-2xl font-bold mb-4`}>QR Code Scanner</h1>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white p-4">
+      <h1 className={`text-4xl font-bold mb-4`}>QR Code Scanner</h1>
 
       {/* Camera selection dropdown */}
-      <div className="mb-4">
-        <label htmlFor="cameraSelect" className="mr-2">
-          Select Camera:
-        </label>
+      <div className="mb-4 self-center flex flex-col items-center">
         <select
           id="cameraSelect"
           value={selectedDeviceId || ""}
