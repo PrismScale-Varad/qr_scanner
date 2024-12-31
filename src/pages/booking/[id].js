@@ -6,11 +6,11 @@ export default function Booking() {
   const [error, setError] = useState(null);
   const router = useRouter();
   const { id } = router.query; // Get the ID from the URL
-
+  const api_url = process.env.API_URL
   useEffect(() => {
     if (id) {
       // Make API call to fetch data for the booking
-      fetch(`http://localhost:3000/api/bookings/${id}`)
+      fetch(`${api_url}/${id}`)
         .then((res) => {
           if (!res.ok) {
             throw new Error("Network response was not ok");
@@ -30,7 +30,7 @@ export default function Booking() {
   const handleCheckIn = async (personId) => {
     try {
       const response = await fetch(
-        `http://localhost:3000/api/bookings/check-in/${id}`, // Replace {id} with the booking ID
+        `${api_url}/check-in/${id}`, // Replace {id} with the booking ID
         {
           method: "PATCH",
           headers: {
