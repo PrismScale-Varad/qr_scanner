@@ -6,7 +6,7 @@ export default function Booking() {
   const [error, setError] = useState(null);
   const router = useRouter();
   const { id } = router.query; // Get the ID from the URL
-  const api_url = process.env.API_URL
+  const api_url = process.env.NEXT_PUBLIC_API_URL
   useEffect(() => {
     if (id) {
       // Make API call to fetch data for the booking
