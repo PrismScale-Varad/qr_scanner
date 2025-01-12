@@ -176,6 +176,10 @@ export default function Home() {
         <span className="text-lg">{fileName ? fileName : ""}</span>{" "}
         {/* Display file name if selected */}
       </div>
+      <button 
+        onClick={() => router.push('/face')}
+        className="p-2 bg-gray-700 hover:bg-blue-700 rounded"
+      >Scan Face</button>
     </div>
   );
 }
