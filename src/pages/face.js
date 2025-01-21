@@ -108,8 +108,8 @@ export default function FacePage() {
         <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white p-4">
             <h1 className="text-xl font-bold mb-4">Face Recognition</h1>
             {error && <div className="text-red-500 mb-4">{error}</div>}
-            <div className="mb-4">
-                <video ref={videoRef} autoPlay className="w-full rounded mb-2 max-w-1/2 scale-x-[-1]" />
+            <div className="mb-4 scale-x-[-1]">
+                <video ref={videoRef} autoPlay className="w-full rounded mb-2 max-w-1/2 " />
             </div>
             <div className="mb-4">
                 <label htmlFor="deviceSelect" className="block mb-2">
