@@ -67,7 +67,7 @@ export default function Home() {
 
                 setIsScanned(true); // Set scan successful
                 controls.stop();
-                router.push(`/person/${parsedId}`);
+                router.push(`/booking/${parsedId}`);
 
               }
             }
