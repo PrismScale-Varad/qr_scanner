@@ -67,12 +67,8 @@ export default function Home() {
 
                 setIsScanned(true); // Set scan successful
                 controls.stop();
+                router.push(`/person/${parsedId}`);
 
-                // Delay the redirect by 200ms
-                setTimeout(() => {
-                  router.push(`/person/${parsedId}`);
-                }, 300);
-                
               }
             }
           );
