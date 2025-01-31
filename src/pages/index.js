@@ -66,9 +66,14 @@ export default function Home() {
                 setQrData(scannedData);
 
                 setIsScanned(true); // Set scan successful
-                controls.stop();
-                router.push(`/booking/${parsedId}`);
+                controls.stop();            
 
+                const parsed = JSON.parse(scannedData);
+                const parseId = parsed.bookingId;
+      
+                setIsScanned(true); // Set scan successful
+                router.push(`/booking/${parseId}`);
+      
               }
             }
           );
