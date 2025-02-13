@@ -6,13 +6,14 @@ export default function FacePage() {
     const [loading, setLoading] = useState(false);
     const [devices, setDevices] = useState([]);
     const [selectedDevice, setSelectedDevice] = useState("");
+    const [capturedImage, setCapturedImage] = useState(null);
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
+    const streamRef = useRef(null);
     const router = useRouter();
     const api_url = process.env.NEXT_PUBLIC_API_URL;
 
     useEffect(() => {
-        // Fetch available video devices on mount
         navigator.mediaDevices
             .enumerateDevices()
             .then((deviceList) => {
@@ -31,16 +32,17 @@ export default function FacePage() {
     }, []);
 
     useEffect(() => {
-        // Automatically start the camera on load
         if (selectedDevice) {
             startCamera();
         }
     }, [selectedDevice]);
 
     const startCamera = () => {
+        setCapturedImage(null); // Reset captured image when starting the camera
         navigator.mediaDevices
             .getUserMedia({ video: { deviceId: selectedDevice || undefined } })
             .then((stream) => {
+                streamRef.current = stream;
                 if (videoRef.current) {
                     videoRef.current.srcObject = stream;
                 }
@@ -51,13 +53,10 @@ export default function FacePage() {
             });
     };
 
-    const captureImage = () => {
-        if (videoRef.current && canvasRef.current) {
-            const context = canvasRef.current.getContext("2d");
-            canvasRef.current.width = videoRef.current.videoWidth;
-            canvasRef.current.height = videoRef.current.videoHeight;
-            context.drawImage(videoRef.current, 0, 0);
-            canvasRef.current.toBlob(processImage, "image/png");
+    const stopCamera = () => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
         }
     };
 
@@ -67,32 +66,32 @@ export default function FacePage() {
         try {
             const reader = new FileReader();
             reader.readAsDataURL(blob);
-
+    
             reader.onloadend = async () => {
                 const base64Image = reader.result;
-
+    
                 const response = await fetch("/api/huggingface", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ image: base64Image }),
                 });
-
+    
                 if (!response.ok) {
                     throw new Error("Failed to process image.");
                 }
-
+    
                 const { embedding } = await response.json();
-
+    
                 const bookingResponse = await fetch(`${api_url}/face`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ embedding: embedding }),
                 });
-
+    
                 if (!bookingResponse.ok) {
-                    throw new Error("Failed to submit embeddings.");
+                    alert("Booking not found.");
                 }
-
+    
                 const bookingData = await bookingResponse.json();
                 router.push(`/booking/${bookingData.id}`);
             };
@@ -103,14 +102,34 @@ export default function FacePage() {
             setLoading(false);
         }
     };
+    
+    const captureImage = () => {
+        if (videoRef.current && canvasRef.current) {
+            const context = canvasRef.current.getContext("2d");
+            canvasRef.current.width = videoRef.current.videoWidth;
+            canvasRef.current.height = videoRef.current.videoHeight;
+            context.drawImage(videoRef.current, 0, 0);
+            canvasRef.current.toBlob((blob) => {
+                setCapturedImage(URL.createObjectURL(blob));
+                stopCamera();
+                processImage(blob); // Process image and redirect
+            }, "image/png");
+        }
+    };
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white p-4">
             <h1 className="text-xl font-bold mb-4">Face Recognition</h1>
             {error && <div className="text-red-500 mb-4">{error}</div>}
-            <div className="mb-4 scale-x-[-1]">
-                <video ref={videoRef} autoPlay className="w-full rounded mb-2 max-w-1/2 " />
+            
+            <div className="mb-4">
+                {capturedImage ? (
+                    <img src={capturedImage} alt="Captured" className="w-full rounded mb-2" />
+                ) : (
+                    <video ref={videoRef} autoPlay className="w-full rounded mb-2" />
+                )}
             </div>
+
             <div className="mb-4">
                 <label htmlFor="deviceSelect" className="block mb-2">
                     Choose Camera:
@@ -128,13 +147,18 @@ export default function FacePage() {
                     ))}
                 </select>
             </div>
-            <button
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mb-4"
-                onClick={startCamera}
-            >
-                Start Camera
-            </button>
+
+            {!capturedImage && (
+                <button
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mb-4"
+                    onClick={startCamera}
+                >
+                    Start Camera
+                </button>
+            )}
+
             <canvas ref={canvasRef} className="hidden" />
+
             <div className="mb-4">
                 <button
                     className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
@@ -144,6 +168,15 @@ export default function FacePage() {
                     {loading ? "Processing..." : "Capture"}
                 </button>
             </div>
+
+            {capturedImage && (
+                <button
+                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                    onClick={startCamera}
+                >
+                    Retake
+                </button>
+            )}
         </div>
     );
 }
